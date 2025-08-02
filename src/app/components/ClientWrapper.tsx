@@ -1,6 +1,6 @@
 'use client';
 
-import { ThemeProvider } from 'next-themes';
+import {ThemeProvider } from 'next-themes';
 import { useState, useEffect } from 'react';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
