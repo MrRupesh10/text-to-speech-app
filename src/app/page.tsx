@@ -78,34 +78,37 @@ useEffect(() => {
     };
   }, [text, translationLanguage]);
 
+ 
 
-
-      useEffect(() => {
-    const loadVoices = () => {
+    useEffect(() => {
+  const loadVoices = () => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
       const availableVoices = window.speechSynthesis.getVoices();
-      setVoices(availableVoices);
       if (availableVoices.length > 0) {
+        setVoices(availableVoices);
         setSelectedVoice(availableVoices[0].name);
       }
-    };
-
+    }
+  };
+     if (typeof window !== 'undefined' && window.speechSynthesis) {
     window.speechSynthesis.onvoiceschanged = loadVoices;
     loadVoices();
-
+  }
     // Load history from localStorage
-    const savedHistory = localStorage.getItem('ttsHistory');
-    if (savedHistory) {
-      setHistory(JSON.parse(savedHistory).map((item: any) => ({
-        ...item,
-        timestamp: new Date(item.timestamp)
-      })));
-    }
+   const savedHistory = localStorage.getItem('ttsHistory');
+  if (savedHistory) {
+    setHistory(JSON.parse(savedHistory).map((item: any) => ({
+      ...item,
+      timestamp: new Date(item.timestamp)
+    })));
+  }
 
-    return () => {
+  return () => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.onvoiceschanged = null;
-    };
-  }, []);
-
+    }
+  };
+}, []);
   useEffect(() => {
     if (text) {
       setCharCount(text.length);
@@ -128,34 +131,40 @@ useEffect(() => {
     }
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        chunksRef.current.push(e.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(chunksRef.current, { type: 'audio/wav' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const a = document.createElement('a');
-        a.href = audioUrl;
-        a.download = 'speech.wav';
-        a.click();
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      console.error('Error accessing microphone:', err);
-      alert('Could not access microphone');
+ const startRecording = async () => {
+  try {
+    if (!navigator?.mediaDevices?.getUserMedia) {
+      alert('Audio recording not supported on this device');
+      return;
     }
-  };
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mediaRecorder = new MediaRecorder(stream);
+    mediaRecorderRef.current = mediaRecorder;
+    chunksRef.current = [];
+
+    mediaRecorder.ondataavailable = (e) => {
+      chunksRef.current.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      const audioBlob = new Blob(chunksRef.current, { type: 'audio/wav' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const a = document.createElement('a');
+      a.href = audioUrl;
+      a.download = 'speech.wav';
+      a.click();
+      URL.revokeObjectURL(audioUrl);
+    };
+
+    mediaRecorder.start();
+    setIsRecording(true);
+  } catch (err) {
+    console.error('Microphone access error:', err);
+    alert('Microphone not accessible');
+  }
+};
+
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {

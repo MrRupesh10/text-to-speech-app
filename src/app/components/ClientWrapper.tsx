@@ -51,7 +51,7 @@ const templates = [
     { name: '🎪 Workshop Invitation', text: 'Join our intensive three-day workshop focused on creative writing and storytelling techniques. Experienced authors will share insights on character development, plot structure, and publishing strategies. Limited spots available for hands-on sessions.' },
     { name: '🌿 Environmental Report', text: 'Recent studies indicate significant improvements in local air quality following the implementation of green initiatives. Urban forests have expanded by 15%, while community recycling programs show increased participation rates.' },
     { name: '💡 Innovation Summary', text: 'Our breakthrough technology revolutionizes renewable energy storage through advanced materials science. Laboratory tests demonstrate 30% higher efficiency than current solutions, with potential applications across multiple industries.' },
-  { name: '🎬 Video Script', text: 'In today\'s video, we\'ll be exploring the fascinating world of...' }
+    { name: '🎬 Video Script', text: 'In today\'s video, we\'ll be exploring the fascinating world of...' }
 ];
 
 export function ClientWrapper({ children }: { children: React.ReactNode }) {
