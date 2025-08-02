@@ -35,6 +35,8 @@ export function ClientWrapper({ children }: { children: React.ReactNode }) {
   const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [history, setHistory] = useState<any[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<string>('');
+
 
   useEffect(() => {
     const initVoices = () => {
@@ -66,7 +68,7 @@ export function ClientWrapper({ children }: { children: React.ReactNode }) {
             setIsSidebarOpen={setIsSidebarOpen}
           />
           <div className="flex flex-1">
-            <Sidebar
+            <Sidebar 
               isSidebarOpen={isSidebarOpen}
               setIsSidebarOpen={setIsSidebarOpen}
               selectedLanguage={selectedLanguage}
@@ -75,6 +77,8 @@ export function ClientWrapper({ children }: { children: React.ReactNode }) {
               history={history}
               setHistory={setHistory}
               templates={templates}
+              selectedVoice={selectedVoice}
+             setSelectedVoice={setSelectedVoice}
             />
             <div className={`flex-1 flex flex-col ${isSidebarOpen ? 'ml-80' : 'ml-0'} transition-all duration-300`}>
               <main className="flex-1 container mx-auto px-4 pt-16">
