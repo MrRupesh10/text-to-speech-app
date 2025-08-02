@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, ChevronDownIcon, StarIcon } from '@heroicons/react/24/outline';
+import { useTheme } from 'next-themes';
+import { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 
 interface SidebarProps {
@@ -29,68 +30,57 @@ export function Sidebar({
   selectedVoice,
   setSelectedVoice
 }: SidebarProps) {
-  const { theme, setTheme } = useAppContext();
-  const { setText } = useAppContext();  // Ensure setText is obtained from context
+  const { theme, setTheme } = useTheme();
+  const { setText } = useAppContext();
   const [isLanguageOpen, setIsLanguageOpen] = useState(true);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(true);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(true);
   const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(true);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(true);
 
-  // Get the unique languages from the voices array
-  const uniqueLanguages = Array.from(new Set(voices.map((voice) => voice.lang.split('-')[0])))
-    .sort((a, b) => new Intl.DisplayNames(['en'], { type: 'language' }).of(a).localeCompare(new Intl.DisplayNames(['en'], { type: 'language' }).of(b)));
-
-  useEffect(() => {
-    // Set the default language if not already set
-    const storedLanguage = localStorage.getItem('selectedLanguage');
-    if (storedLanguage) {
-      setSelectedLanguage(storedLanguage);
-    } else if (voices.length > 0) {
-      const defaultLanguage = voices[0].lang.split('-')[0];
-      setSelectedLanguage(defaultLanguage);
-      localStorage.setItem('selectedLanguage', defaultLanguage);
-    }
-  }, [voices]);
-
-  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const lang = e.target.value;
-    setSelectedLanguage(lang);
-    setSelectedVoice(voices.find(v => v.lang.startsWith(lang))?.name || voices[0]?.name || ''); 
-    localStorage.setItem('selectedLanguage', lang); // Save language to localStorage
-  };
-
   return (
     <div className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-80 bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out z-40 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} overflow-y-auto`}>
       <div className="p-4 space-y-6">
         
         {/* Language Filter Section */}
-        <div className="space-y-2">
-          <button
-            onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-            className="flex items-center justify-between w-full text-gray-300 hover:text-white"
-          >
-            <h3 className="text-lg font-semibold">Language Filter</h3>
-            {isLanguageOpen ? (
-              <ChevronUpIcon className="h-5 w-5" />
-            ) : (
-              <ChevronDownIcon className="h-5 w-5" />
-            )}
-          </button>
-          {isLanguageOpen && (
-            <select
-              value={selectedLanguage}
-              onChange={handleLanguageChange}
-              className="w-full p-2 rounded-lg bg-gray-800 text-gray-300 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              {uniqueLanguages.map((lang) => (
-                <option key={lang} value={lang}>
-                  {new Intl.DisplayNames(['en'], { type: 'language' }).of(lang) || lang}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+<div className="space-y-2">
+  <button
+    onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+    className="flex items-center justify-between w-full text-gray-300 hover:text-white"
+  >
+    <h3 className="text-lg font-semibold">Language Filter</h3>
+    {isLanguageOpen ? (
+      <ChevronUpIcon className="h-5 w-5" />
+    ) : (
+      <ChevronDownIcon className="h-5 w-5" />
+    )}
+  </button>
+
+  {isLanguageOpen && voices.length > 0 && (
+    <select
+      value={selectedLanguage}
+      onChange={(e) => {
+        const lang = e.target.value;
+        setSelectedLanguage(lang);
+        setSelectedVoice(''); // optional: reset voice when language changes
+        setTimeout(() => setSelectedVoice(
+          voices.find(v => v.lang.startsWith(lang))?.name || voices[0]?.name || ''
+        ), 100); // ensures voice is updated after render
+      }}
+      className="w-full p-2 rounded-lg bg-gray-800 text-gray-300 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+    >
+      {Array.from(new Set(voices.map(v => v.lang.split('-')[0])))
+        .sort()
+        .map((lang) => (
+          <option key={lang} value={lang}>
+            {new Intl.DisplayNames(['en'], { type: 'language' }).of(lang) || lang}
+          </option>
+        ))}
+    </select>
+  )}
+</div>
+
+
 
         {/* Voice Settings Section */}
         <div className="space-y-2">
@@ -250,4 +240,4 @@ export function Sidebar({
       </div>
     </div>
   );
-}
+} 
