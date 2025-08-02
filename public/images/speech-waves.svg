@@ -1,0 +1,33 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g opacity="0.8">
+    <path d="M256 96v320" stroke="url(#paint0_linear)" stroke-width="24" stroke-linecap="round">
+      <animate attributeName="d" dur="2s" repeatCount="indefinite" values="M256 96v320;M256 136v240;M256 96v320"/>
+    </path>
+    <path d="M192 128v256" stroke="url(#paint1_linear)" stroke-width="24" stroke-linecap="round">
+      <animate attributeName="d" dur="2s" repeatCount="indefinite" values="M192 128v256;M192 168v176;M192 128v256" begin="0.2s"/>
+    </path>
+    <path d="M320 128v256" stroke="url(#paint1_linear)" stroke-width="24" stroke-linecap="round">
+      <animate attributeName="d" dur="2s" repeatCount="indefinite" values="M320 128v256;M320 168v176;M320 128v256" begin="0.2s"/>
+    </path>
+    <path d="M128 192v128" stroke="url(#paint2_linear)" stroke-width="24" stroke-linecap="round">
+      <animate attributeName="d" dur="2s" repeatCount="indefinite" values="M128 192v128;M128 212v88;M128 192v128" begin="0.4s"/>
+    </path>
+    <path d="M384 192v128" stroke="url(#paint2_linear)" stroke-width="24" stroke-linecap="round">
+      <animate attributeName="d" dur="2s" repeatCount="indefinite" values="M384 192v128;M384 212v88;M384 192v128" begin="0.4s"/>
+    </path>
+  </g>
+  <defs>
+    <linearGradient id="paint0_linear" x1="256" y1="96" x2="256" y2="416" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9333EA"/>
+      <stop offset="1" stop-color="#EC4899"/>
+    </linearGradient>
+    <linearGradient id="paint1_linear" x1="256" y1="128" x2="256" y2="384" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9333EA"/>
+      <stop offset="1" stop-color="#EC4899"/>
+    </linearGradient>
+    <linearGradient id="paint2_linear" x1="256" y1="192" x2="256" y2="320" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9333EA"/>
+      <stop offset="1" stop-color="#EC4899"/>
+    </linearGradient>
+  </defs>
+</svg> 

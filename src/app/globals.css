@@ -1,26 +1,108 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+/* Light theme (default) */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --foreground-rgb: 51, 51, 51;
+  --background-start: #f8fafc;
+  --background-end: #f1f5f9;
+  --accent-light: rgba(139, 92, 246, 0.08);
+  --accent-dark: rgba(139, 92, 246, 0.15);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* System theme (based on system preferences) */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground-rgb: 255, 255, 255;
+    --background-start: #1e1e2e;
+    --background-end: #2d2d3f;
+    --accent-light: rgba(139, 92, 246, 0.2);
+    --accent-dark: rgba(139, 92, 246, 0.3);
   }
 }
 
+/* Dark theme (manually selected) */
+[data-theme='dark'] {
+  --foreground-rgb: 255, 255, 255;
+  --background-start: #0f172a;
+  --background-end: #1e293b;
+  --accent-light: rgba(139, 92, 246, 0.15);
+  --accent-dark: rgba(139, 92, 246, 0.25);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(to bottom right, var(--background-start), var(--background-end));
+  min-height: 100vh;
+}
+
+/* Sidebar customization */
+.sidebar-light {
+  @apply bg-slate-50/90 backdrop-blur-lg;
+}
+
+.sidebar-system {
+  @apply bg-gray-800 bg-opacity-90 backdrop-blur-lg;
+}
+
+.sidebar-dark {
+  @apply bg-slate-900 bg-opacity-90 backdrop-blur-lg;
+}
+
+/* Content area customization */
+.content-light {
+  @apply from-slate-50 via-gray-50 to-slate-50 bg-opacity-50;
+}
+
+.content-system {
+  @apply from-gray-800 via-gray-900 to-gray-800;
+}
+
+.content-dark {
+  @apply from-slate-900 via-slate-800 to-slate-900;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 dark:bg-gray-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500 dark:bg-gray-500;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Add navbar styles */
+.navbar {
+  @apply fixed top-0 left-0 right-0 z-50 backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 border-b border-gray-200/20 dark:border-gray-700/20;
+}
+
+.navbar-content {
+  @apply container mx-auto px-4 h-16 flex items-center justify-between;
+}
+
+.nav-link {
+  @apply px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors;
+}
+
+.nav-link.active {
+  @apply bg-purple-100 dark:bg-purple-900 text-purple-900 dark:text-purple-100;
 }
