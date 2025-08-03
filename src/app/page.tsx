@@ -1,4 +1,5 @@
 'use client';
+type SpeechRecognition = typeof window.webkitSpeechRecognition;
 
 import { useState, useEffect, useRef } from 'react';
 import { ChevronRightIcon, ChevronLeftIcon, ChevronUpIcon, ChevronDownIcon, StarIcon } from '@heroicons/react/24/outline';
@@ -20,6 +21,10 @@ declare global {
     webkitSpeechRecognition: any;
   }
 }
+interface SpeechRecognitionEvent extends Event {
+    results: SpeechRecognitionResultList;
+    resultIndex: number;
+  }
 
 
 interface HistoryItem {
@@ -121,7 +126,7 @@ useEffect(() => {
 
 
 // 🎤 Speech Recognition Setup
-const recognitionRef = useRef<SpeechRecognition | null>(null);
+const recognitionRef = useRef<InstanceType<typeof window.webkitSpeechRecognition> | null>(null);
 const [isListening, setIsListening] = useState(false);
 
 const toggleSpeechToText = () => {
@@ -162,7 +167,9 @@ useEffect(() => {
         transcript += event.results[i][0].transcript;
       }
       console.log('✅ Final Transcript:', transcript);
-      setText((prev: string) => (prev || '') + ' ' + transcript);
+      setText(text + ' ' + transcript);
+
+
     };
 
     recognitionRef.current = recognition;
