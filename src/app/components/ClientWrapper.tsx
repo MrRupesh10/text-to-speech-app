@@ -83,7 +83,7 @@ const filteredVoices = voices.filter(voice =>
 );
 
   
-  return (
+  return ( 
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <AppProvider>
         <div className="min-h-screen flex flex-col">
@@ -118,6 +118,6 @@ const filteredVoices = voices.filter(voice =>
           </div>
         </div>
       </AppProvider>
-    </ThemeProvider>
+    </ThemeProvider> 
   );
 } 

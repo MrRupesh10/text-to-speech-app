@@ -6,6 +6,20 @@ import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { useAppContext } from './context/AppContext';
 import { translateText as translate } from './services/translation';
+import Lottie from 'lottie-react';
+import micAnimation from '@/assets/Lottie/mic animation.json';
+
+
+
+<Lottie animationData={micAnimation} loop autoplay />
+
+
+
+declare global {
+  interface Window {
+    webkitSpeechRecognition: any;
+  }
+}
 
 
 interface HistoryItem {
@@ -41,6 +55,36 @@ export default function Home() {
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+
+  // --- Added Sticky Speak/Stop Toggle Logic ---
+  const speak = () => {
+    const content = translatedText || text;
+    if (!content) return;
+    const utterance = new SpeechSynthesisUtterance(content);
+    const voice = voices.find((v) => v.name === selectedVoice || v.lang.startsWith(voiceLanguage));
+    if (voice) utterance.voice = voice;
+    utterance.rate = rate;
+    utterance.pitch = pitch;
+    utterance.lang = voice?.lang || voiceLanguage;
+
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    window.speechSynthesis.speak(utterance);
+    setIsSpeaking(true);
+  };
+
+  const stop = () => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  };
+
+  const handleStickySpeakStopToggle = () => {
+    if (isSpeaking) stop();
+    else speak();
+  };
 
 // Add spinner component
 const Spinner = () => (
@@ -49,8 +93,6 @@ const Spinner = () => (
     <span className="text-sm text-gray-500 dark:text-gray-300">Translating...</span>
   </div>
 );
-
-
 useEffect(() => {
     if (!text) {
       setTranslatedText('');
@@ -58,8 +100,7 @@ useEffect(() => {
     }
 
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
-
-    debounceTimer.current = setTimeout(async () => {
+      debounceTimer.current = setTimeout(async () => {
       setIsTranslating(true);
       try {
         const langCode = translationLanguage.split('-')[0].toLowerCase();
@@ -78,29 +119,73 @@ useEffect(() => {
     };
   }, [text, translationLanguage]);
 
- 
 
-    useEffect(() => {
-  const loadVoices = () => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      const availableVoices = window.speechSynthesis.getVoices();
-      if (availableVoices.length > 0) {
-        setVoices(availableVoices);
-        setSelectedVoice(availableVoices[0].name);
-      }
-    }
-  };
-     if (typeof window !== 'undefined' && window.speechSynthesis) {
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-    loadVoices();
+// 🎤 Speech Recognition Setup
+const recognitionRef = useRef<SpeechRecognition | null>(null);
+const [isListening, setIsListening] = useState(false);
+
+const toggleSpeechToText = () => {
+  if (!recognitionRef.current) return;
+  if (isListening) {
+    recognitionRef.current.stop();
+    setIsListening(false);
+  } else {
+    recognitionRef.current.start();
+    setIsListening(true);
   }
-    // Load history from localStorage
-   const savedHistory = localStorage.getItem('ttsHistory');
-  if (savedHistory) {
-    setHistory(JSON.parse(savedHistory).map((item: any) => ({
-      ...item,
-      timestamp: new Date(item.timestamp)
-    })));
+};
+
+// ✅ CORRECT: Setup recognition once language changes
+useEffect(() => {
+  if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+    console.log('SpeechRecognition is supported');
+    const SpeechRecognition = (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = voiceLanguage;
+
+    recognition.onstart = () => console.log('🎤 Recognition started');
+    recognition.onend = () => {
+      console.log('🛑 Recognition stopped');
+      setIsListening(false);
+    };
+    recognition.onerror = (e: any) => {
+      console.error('❌ Recognition error:', e);
+      setIsListening(false);
+    };
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      console.log('✅ Final Transcript:', transcript);
+      setText((prev: string) => (prev || '') + ' ' + transcript);
+    };
+
+    recognitionRef.current = recognition;
+  }
+}, [voiceLanguage]);
+
+
+//  Setup voice list when browser loads
+const loadVoices = () => {
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    const availableVoices = window.speechSynthesis.getVoices();
+    if (availableVoices.length > 0) {
+      setVoices(availableVoices);
+      setSelectedVoice(availableVoices[0].name);
+    }
+  }
+};
+
+//Wrap in useEffect 
+useEffect(() => {
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices(); 
   }
 
   return () => {
@@ -109,6 +194,24 @@ useEffect(() => {
     }
   };
 }, []);
+
+
+
+  
+    // Load history from localStorage
+   useEffect(() => {
+  const savedHistory = localStorage.getItem('ttsHistory');
+  if (savedHistory) {
+    setHistory(JSON.parse(savedHistory).map((item: any) => ({
+      ...item,
+      timestamp: new Date(item.timestamp)
+    })));
+  }
+}, []);
+
+
+ 
+
   useEffect(() => {
     if (text) {
       setCharCount(text.length);
@@ -130,7 +233,30 @@ useEffect(() => {
       reader.readAsText(file);
     }
   };
+// 👇 Paste this below handleFileUpload
+const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64Audio = reader.result as string;
+
+    // 👉 Send audio to backend or use API like Whisper to transcribe
+    const response = await fetch('/api/transcribe', {
+      method: 'POST',
+      body: JSON.stringify({ audio: base64Audio }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const { transcript } = await response.json();
+    setText(transcript); // sets it into the Original Text box
+  };
+
+  reader.readAsDataURL(file);
+};
+
+//record audio
  const startRecording = async () => {
   try {
     if (!navigator?.mediaDevices?.getUserMedia) {
@@ -164,21 +290,23 @@ useEffect(() => {
     alert('Microphone not accessible');
   }
 };
-
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  const handleSpeak = async () => {
+const handleSpeak = async () => {
     if (!text) return;
     
     try {
       const textToSpeak = translatedText || text;
       const utterance = new SpeechSynthesisUtterance(textToSpeak);
+
+
+   // logic to handle speech   
+  // const stopRecording = () => {
+  //   if (mediaRecorderRef.current && isRecording) {
+  //     mediaRecorderRef.current.stop();
+  //     setIsRecording(false);
+  //   }
+  // };
+
+  
       
       // Find a voice for the selected voice language
       const availableVoices = voices.filter(v => v.lang.startsWith(voiceLanguage));
@@ -322,10 +450,45 @@ useEffect(() => {
             <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-pink-500/10 rounded-full filter blur-3xl"></div>
           </div>
         </header>
+{showClearConfirm && (
+  <div
+    onClick={() => setShowClearConfirm(false)}
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+        className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-2xl max-w-sm w-full transition transform duration-300 ease-out scale-100 opacity-100 translate-y-0"
+    >
+      <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+        Confirm Clear Text
+      </h2>
+      <p className="text-gray-600 dark:text-gray-300 mb-6">
+        Are you sure you want to clear the original text? This action cannot be undone.
+      </p>
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={() => setShowClearConfirm(false)}
+          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => {
+            setText('');
+            setShowClearConfirm(false);
+          }}
+          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+        >
+          Clear
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
         <div className="container mx-auto px-4 py-8 max-w-4xl flex-grow">
-          <main className="space-y-8">
-            <div className="backdrop-blur-lg bg-white/30 dark:bg-gray-800/30 rounded-2xl shadow-xl p-8 border border-white/20 dark:border-gray-700/20">
+          <main className="space-y-8 rounded-xl shadow-xl backdrop-blur-md bg-[#fff8dc]/90 dark:bg-gray-800/80 text-black dark:text-white transition-all duration-300">
+            <div className="bg-transparent dark:bg-gray-800/30 rounded-2xl shadow-xl p-8 border border-white/20 dark:border-gray-700/20">
               <div className="mb-6">
                 <div className="flex items-center gap-4 mb-4">
                   <label className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white cursor-pointer transition-colors">
@@ -342,7 +505,7 @@ useEffect(() => {
                       className="hidden"
                     />
                   </label>
-                  <button
+                  {/* <button
                     onClick={isRecording ? stopRecording : startRecording}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
                       isRecording
@@ -361,7 +524,24 @@ useEffect(() => {
                       </svg>
                     )}
                     <span>{isRecording ? 'Stop' : 'Record'}</span>
-                  </button>
+                  </button> */}
+<label className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white cursor-pointer transition-colors">
+  <div className="w-6 h-6">
+    <Lottie animationData={micAnimation} loop autoplay />
+  </div>
+  <span>Upload Audio</span>
+  <input
+    type="file"
+    accept="audio/*"
+    onChange={handleAudioUpload}
+    className="hidden"
+  />
+</label>
+
+
+
+
+
                   <div className="flex items-center gap-2 ml-auto">
                     <label className="text-sm text-gray-600 dark:text-gray-400">Voice Language:</label>
                     <select
@@ -389,21 +569,29 @@ useEffect(() => {
                   <div className="space-y-2">
                     <label className="text-sm text-gray-600 dark:text-gray-400">Original Text:</label>
                     <textarea
-                      className="w-full h-48 p-4 text-gray-700 dark:text-gray-200 bg-white/50 dark:bg-gray-700/50 rounded-xl border-0 shadow-inner focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200 ease-in-out text-lg"
-                      placeholder="Enter your text here..."
-                      value={text}
-                      onChange={(e) => setText(e.target.value)}
-                    />
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Words: {wordCount} | Characters: {charCount}
-                      </div>
-                      <div className="flex items-center gap-4 mb-4">
-                        <select
-                          value={translationLanguage}
-                          onChange={(e) => setTranslationLanguage(e.target.value)}
-                          className="px-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700"
-                        >
+  className="w-full h-48 p-4 text-gray-700 dark:text-gray-200 bg-white/50 dark:bg-gray-700/50 rounded-xl border-0 shadow-inner focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200 ease-in-out text-lg"
+  placeholder="Enter your text here..."
+  value={text}
+  onChange={(e) => setText(e.target.value)}
+/>
+<div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mt-2">
+  <div className="text-sm text-gray-600 dark:text-gray-400">
+    Words: {wordCount} | Characters: {charCount}
+  </div>
+
+  <div className="flex flex-wrap gap-2">
+   <button
+  onClick={() => setShowClearConfirm(true)}
+  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm"
+>
+  🗑️ Clear Text
+</button>
+
+    <select
+      value={translationLanguage}
+      onChange={(e) => setTranslationLanguage(e.target.value)}
+      className="px-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700"
+    >
                           <option value="en">English</option>
                           <option value="es">Spanish</option>
                           <option value="fr">French</option>
@@ -426,6 +614,16 @@ useEffect(() => {
                           } text-white`}
                         >
                           {isTranslating ? 'Translating...' : 'Translate'}
+                        </button>
+                          {/* Speak/Stop Button - inline */}
+                       {/* 🎤 Inline Microphone Button for Speech-to-Text */}
+                        <button
+                           onClick={toggleSpeechToText}
+                            className={`px-4 py-2 rounded-lg ${
+                            isListening ? 'bg-red-500 hover:bg-red-600' : 'bg-indigo-500 hover:bg-indigo-600'
+                                    } text-white transition-all`}
+                        >
+                             {isListening ? '⏹️ Stop' : '🎤 Speak'}
                         </button>
                       </div>
                     </div>
@@ -464,8 +662,12 @@ useEffect(() => {
                       className="w-full accent-purple-500"
                     />
                   </div>
-                </div>
-                
+                </div>  
+          </div>
+            </div>
+
+
+{/* this was for the speak/stop button
                 <div className="flex justify-center gap-4 mt-6">
                   <button
                     onClick={handleSpeak}
@@ -491,9 +693,8 @@ useEffect(() => {
                       </span>
                     </button>
                   )}
-                </div>
-              </div>
-            </div>
+                </div> */}
+              
 
             {history.length > 0 && (
               <div className="backdrop-blur-lg bg-white/20 dark:bg-gray-800/20 rounded-2xl p-6 border border-white/20">

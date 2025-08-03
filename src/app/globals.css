@@ -4,9 +4,9 @@
 
 /* Light theme (default) */
 :root {
-  --foreground-rgb: 51, 51, 51;
-  --background-start: #f8fafc;
-  --background-end: #f1f5f9;
+  --foreground-rgb: 0, 0, 0;
+  --background-start: #e6d181;
+  --background-end: #d7c88b;
   --accent-light: rgba(139, 92, 246, 0.08);
   --accent-dark: rgba(139, 92, 246, 0.15);
 }
@@ -37,13 +37,30 @@ body {
   min-height: 100vh;
 }
 
-/* Sidebar customization */
-.sidebar-light {
-  @apply bg-slate-50/90 backdrop-blur-lg;
+/* Override navbar and footer in light theme */
+[data-theme='light'] nav,
+[data-theme='light'] nav *,
+[data-theme='light'] footer,
+[data-theme='light'] footer * {
+  background-color: #0f172a !important;
+  color: #f1f5f9 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.sidebar-system {
-  @apply bg-gray-800 bg-opacity-90 backdrop-blur-lg;
+/* Optional: Improve light mode contrast */
+[data-theme='light'] {
+  background: linear-gradient(to bottom, #fefefe, #f3f4f6);
+  --foreground-rgb: 20, 20, 20;
+  --background-start: #ffffff;
+  --background-end: #f0f0f0;
+  --accent-light: rgba(139, 92, 246, 0.1);
+  --accent-dark: rgba(139, 92, 246, 0.2);
+}
+
+
+/* Sidebar customization 
+.sidebar-light {
+  @apply bg-slate-50/90 backdrop-blur-lg;
 }
 
 .sidebar-dark {
